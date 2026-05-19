@@ -458,7 +458,11 @@ function resetFlashcards() {
 }
 
 function showDisclaimer() {
-    document.body.classList.add("disclaimer-open");
+    const gateModal = document.querySelector(".gate-modal");
+
+    if (gateModal) {
+        gateModal.style.display = "none";
+    }
 
     notify({
         title: "Disclaimer",
@@ -474,7 +478,9 @@ function showDisclaimer() {
         confirmButtonColor: "#174ea6",
         width: 620,
         willClose: () => {
-            document.body.classList.remove("disclaimer-open");
+            if (gateModal && !$("gate").hidden) {
+                gateModal.style.display = "";
+            }
         }
     });
 }

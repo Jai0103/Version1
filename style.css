@@ -909,4 +909,9 @@ main {
     .nav-btn {
         min-height: 40px;
     }
+    
+.swal2-container {
+    z-index: 20000 !important;
+}
+    
 }

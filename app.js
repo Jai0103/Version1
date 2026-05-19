@@ -9,7 +9,7 @@ let secondsLeft = 0;
 
 const STORAGE_KEY = "uapl_mock_test_progress_v3";
 const ACCESS_KEY = "uapl_mock_test_access_granted";
-const ACCESS_CODE = "UAPL2026";
+const ACCESS_CODE_HASH = "8b25d2e51f732d9249a6d38c076f67960f72fd623bd629e372404c2a85be28c5";
 
 const $ = (id) => document.getElementById(id);
 const getQuestionsGlobal = () => (typeof QUESTIONS !== "undefined" ? QUESTIONS : window.QUESTIONS);
@@ -24,6 +24,23 @@ function notify(options) {
     return Promise.resolve();
 }
 
+async function sha256(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+    return hashArray
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function refreshIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
 function hasQuestions() {
     const source = getQuestionsGlobal();
     return Array.isArray(source) && source.length > 0;
@@ -35,10 +52,12 @@ function getQuestionBank() {
 
 function shuffleArray(array) {
     const copy = [...array];
+
     for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [copy[i], copy[j]] = [copy[j], copy[i]];
     }
+
     return copy;
 }
 
@@ -55,6 +74,7 @@ function setupQuestions() {
 
 function saveProgress() {
     if (!questions.length) return;
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
         currentQuestion,
         currentFlashcard,
@@ -85,6 +105,7 @@ function loadProgress() {
 
         $("timerToggle").checked = Boolean(data.timerEnabled);
         $("shuffleToggle").checked = Boolean(data.shuffleEnabled);
+
         return true;
     } catch (error) {
         localStorage.removeItem(STORAGE_KEY);
@@ -100,6 +121,7 @@ function startNewQuiz() {
 
     clearInterval(timer);
     localStorage.removeItem(STORAGE_KEY);
+
     setupQuestions();
     currentQuestion = 0;
     currentFlashcard = 0;
@@ -150,21 +172,27 @@ function updateTimerDisplay() {
 
 function switchMode(mode) {
     const isQuiz = mode === "quiz";
+
     $("quizPanel").classList.toggle("active", isQuiz);
     $("flashPanel").classList.toggle("active", !isQuiz);
     $("quizTab").classList.toggle("active", isQuiz);
     $("flashTab").classList.toggle("active", !isQuiz);
     $("quizTab").setAttribute("aria-selected", String(isQuiz));
     $("flashTab").setAttribute("aria-selected", String(!isQuiz));
+
     closeNavigation();
+
     if (questions.length) {
         renderQuiz();
         renderFlashcard();
     }
+
+    refreshIcons();
 }
 
 function openNavigation() {
     const isQuizMode = $("quizPanel").classList.contains("active");
+
     $("quizNavPanel").classList.toggle("show", isQuizMode);
     $("flashNavPanel").classList.toggle("show", !isQuizMode);
     $("navOverlay").classList.add("show");
@@ -188,6 +216,7 @@ function renderQuizNav() {
             ? ""
             : userAnswers[index] === question.answer ? " correct" : " wrong";
         const active = index === currentQuestion ? " active" : "";
+
         return `<button class="nav-btn${state}${active}" type="button" onclick="goToQuestion(${index})">${index + 1}</button>`;
     }).join("");
 }
@@ -195,6 +224,7 @@ function renderQuizNav() {
 function renderFlashNav() {
     $("flashNav").innerHTML = questions.map((_, index) => {
         const active = index === currentFlashcard ? " active" : "";
+
         return `<button class="nav-btn${active}" type="button" onclick="goToFlashcard(${index})">${index + 1}</button>`;
     }).join("");
 }
@@ -208,29 +238,39 @@ function renderQuiz() {
     const question = questions[currentQuestion];
     const letters = ["A", "B", "C", "D"];
     const answeredCount = userAnswers.filter((answer) => answer !== null).length;
+    const accuracy = answeredCount > 0 ? Math.round((getScore() / answeredCount) * 100) : 0;
     const submitButton = $("quizCard").querySelector(".primary-btn");
 
     setVisible($("resultCard"), false);
     setVisible($("reviewCard"), false);
     setVisible($("quizCard"), true);
+
     if (submitButton) submitButton.hidden = false;
+
     $("quizCounter").textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
     $("scoreCounter").textContent = `Score: ${getScore()}`;
+    $("answeredCounter").textContent = `Answered ${answeredCount} / ${questions.length}`;
+    $("accuracyCounter").textContent = `Accuracy ${accuracy}%`;
     $("quizProgressBar").style.width = `${(answeredCount / questions.length) * 100}%`;
+    $("answerFeedback").hidden = true;
+    $("answerFeedback").innerHTML = "";
     $("quizQuestionText").textContent = `Q${currentQuestion + 1}: ${question.question}`;
+
     $("quizOptionsBox").innerHTML = question.options.map((option, index) => {
         const checked = userAnswers[currentQuestion] === index ? "checked" : "";
         const disabled = userAnswers[currentQuestion] !== null ? "disabled" : "";
+
         return `
             <label class="option">
                 <input type="radio" name="answer" value="${index}" ${checked} ${disabled}>
-                <span><b>${letters[index]}</b>${option}</span>
+                <span><b>${letters[index] || index + 1}</b>${option}</span>
             </label>
         `;
     }).join("");
 
     renderQuizNav();
     saveProgress();
+    refreshIcons();
 }
 
 function goToQuestion(index) {
@@ -258,6 +298,7 @@ function checkAnswer() {
     }
 
     const selected = document.querySelector('input[name="answer"]:checked');
+
     if (!selected) {
         notify({
             title: "Choose an answer",
@@ -270,25 +311,31 @@ function checkAnswer() {
 
     const selectedAnswer = Number(selected.value);
     const isCorrect = selectedAnswer === question.answer;
+    const feedback = $("answerFeedback");
+
     userAnswers[currentQuestion] = selectedAnswer;
+
+    document.querySelectorAll('input[name="answer"]').forEach((input) => {
+        input.disabled = true;
+    });
+
+    feedback.hidden = false;
+    feedback.className = `answer-feedback ${isCorrect ? "correct" : "wrong"}`;
+    feedback.innerHTML = isCorrect
+        ? `<strong>Correct.</strong><p>${question.explanation}</p>`
+        : `<strong>Incorrect.</strong><p><b>Correct answer:</b> ${question.options[question.answer]}</p><p>${question.explanation}</p>`;
+
+    renderQuizNav();
     saveProgress();
 
-    notify({
-        title: isCorrect ? "Correct" : "Incorrect",
-        html: isCorrect
-            ? question.explanation
-            : `<strong>Correct answer:</strong> ${question.options[question.answer]}<br><br>${question.explanation}`,
-        icon: isCorrect ? "success" : "error",
-        confirmButtonText: currentQuestion === questions.length - 1 ? "Finish" : "Continue",
-        confirmButtonColor: "#174ea6"
-    }).then(() => {
+    setTimeout(() => {
         if (currentQuestion < questions.length - 1) {
             currentQuestion++;
             renderQuiz();
         } else {
             showFinalResult();
         }
-    });
+    }, 1400);
 }
 
 function showFinalResult() {
@@ -306,10 +353,14 @@ function showFinalResult() {
     setVisible($("quizCard"), false);
     setVisible($("reviewCard"), false);
     setVisible($("resultCard"), true);
+
     $("quizProgressBar").style.width = "100%";
     $("quizCounter").textContent = `Completed ${total} questions`;
     $("scoreCounter").textContent = `Final Score: ${finalScore}/${total}`;
+    $("answeredCounter").textContent = `Answered ${userAnswers.filter((answer) => answer !== null).length} / ${total}`;
+    $("accuracyCounter").textContent = `Accuracy ${percentage}%`;
     $("finalScore").textContent = `${finalScore} / ${total} (${percentage}%)`;
+
     $("finalMessage").textContent = percentage >= 80
         ? "Great work. You have a strong grasp of the material."
         : percentage >= 50
@@ -318,12 +369,14 @@ function showFinalResult() {
 
     renderQuizNav();
     saveProgress();
+    refreshIcons();
 }
 
 function showReview(onlyMistakes) {
     const items = questions.map((question, index) => {
         const userAnswer = userAnswers[index];
         const isCorrect = userAnswer === question.answer;
+
         if (onlyMistakes && isCorrect) return "";
 
         return `
@@ -339,16 +392,22 @@ function showReview(onlyMistakes) {
     setVisible($("resultCard"), false);
     setVisible($("quizCard"), false);
     setVisible($("reviewCard"), true);
+
     $("reviewCard").innerHTML = `
         <div class="review-header">
             <div>
                 <p class="eyebrow">Review</p>
                 <h2>${onlyMistakes ? "Mistakes" : "All Questions"}</h2>
             </div>
-            <button class="secondary-btn" type="button" onclick="showFinalResult()">Back</button>
+            <button class="secondary-btn" type="button" onclick="showFinalResult()">
+                <i data-lucide="arrow-left"></i>
+                <span>Back</span>
+            </button>
         </div>
         ${items || "<p>No mistakes to review. Excellent work.</p>"}
     `;
+
+    refreshIcons();
 }
 
 function renderFlashcard() {
@@ -358,6 +417,7 @@ function renderFlashcard() {
     }
 
     const question = questions[currentFlashcard];
+
     $("flashcard").classList.remove("flipped");
     $("flashCounter").textContent = `Card ${currentFlashcard + 1} of ${questions.length}`;
     $("flashProgressBar").style.width = `${((currentFlashcard + 1) / questions.length) * 100}%`;
@@ -404,8 +464,8 @@ function showDisclaimer() {
         html: `
             <div class="disclaimer-text">
                 <p>This project is an <b>independent educational resource</b> and is <b>not affiliated with, endorsed by, or connected to the Civil Aviation Authority of Singapore (CAAS)</b>.</p>
-                <p>All questions and materials are intended strictly for <b>practice and learning purposes only</b>. They are not official examination content.</p>
-                <p>Users should refer to official CAAS publications, guidelines, and approved training providers for current and authoritative information.</p>
+                <p>All questions and materials are intended strictly for <b>practice and learning purposes only</b>. They are not official examination content and may not accurately reflect the structure, wording, or content of the actual CAAS theory examination.</p>
+                <p>Users should refer to official CAAS publications, guidelines, and approved training providers for the most accurate, current, and authoritative information.</p>
             </div>
         `,
         confirmButtonText: "I Understand",
@@ -422,9 +482,12 @@ function showQuestionBankError() {
     setVisible($("quizCard"), true);
     setVisible($("resultCard"), false);
     setVisible($("reviewCard"), false);
+
     $("quizCounter").textContent = "Setup Required";
     $("timerDisplay").textContent = "Timer Off";
     $("scoreCounter").textContent = "0 questions";
+    $("answeredCounter").textContent = "Answered 0 / 0";
+    $("accuracyCounter").textContent = "Accuracy 0%";
     $("quizProgressBar").style.width = "0%";
     $("quizQuestionText").textContent = "Question bank not loaded";
     $("quizOptionsBox").innerHTML = `
@@ -433,8 +496,10 @@ function showQuestionBankError() {
             <p>The file must define <strong>const QUESTIONS = [...]</strong>. Your pasted question array is fine; it just needs to be saved as <strong>questions.js</strong>.</p>
         </div>
     `;
+
     const submitButton = $("quizCard").querySelector(".primary-btn");
     if (submitButton) submitButton.hidden = true;
+
     $("quizNav").innerHTML = "";
     $("flashNav").innerHTML = "";
     $("flashQuestionText").textContent = "Question bank not loaded";
@@ -445,6 +510,7 @@ function showQuestionBankError() {
 function grantAccess() {
     localStorage.setItem(ACCESS_KEY, "true");
     $("gate").classList.add("leaving");
+
     setTimeout(() => {
         setVisible($("gate"), false);
         setVisible($("app"), true);
@@ -452,11 +518,12 @@ function grantAccess() {
     }, 220);
 }
 
-function checkAccess() {
+async function checkAccess() {
     const codeInput = $("accessCode");
     const errorMsg = $("errorMsg");
+    const enteredHash = await sha256(codeInput.value.trim());
 
-    if (codeInput.value.trim() === ACCESS_CODE) {
+    if (enteredHash === ACCESS_CODE_HASH) {
         errorMsg.textContent = "";
         grantAccess();
         return;
@@ -490,12 +557,12 @@ function initializeApp() {
 
     renderQuiz();
     renderFlashcard();
+    refreshIcons();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-     if (window.lucide) {
-        lucide.createIcons();
-    }
+    refreshIcons();
+
     $("gateForm").addEventListener("submit", (event) => {
         event.preventDefault();
         checkAccess();
@@ -503,10 +570,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("timerToggle").addEventListener("change", startNewQuiz);
     $("shuffleToggle").addEventListener("change", startNewQuiz);
+
     $("disclaimerLink").addEventListener("click", (event) => {
         event.preventDefault();
         showDisclaimer();
     });
+
+    const gateDisclaimerLink = $("gateDisclaimerLink");
+    if (gateDisclaimerLink) {
+        gateDisclaimerLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            showDisclaimer();
+        });
+    }
+
     $("flashcard").addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
@@ -517,9 +594,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeNavigation();
+
         if (!$("flashPanel").classList.contains("active")) return;
+
         if (event.key === "ArrowRight") nextFlashcard();
         if (event.key === "ArrowLeft") previousFlashcard();
+
         if (event.key === " ") {
             event.preventDefault();
             flipCard();

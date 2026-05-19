@@ -458,6 +458,8 @@ function resetFlashcards() {
 }
 
 function showDisclaimer() {
+    document.body.classList.add("disclaimer-open");
+
     notify({
         title: "Disclaimer",
         icon: "info",
@@ -470,7 +472,10 @@ function showDisclaimer() {
         `,
         confirmButtonText: "I Understand",
         confirmButtonColor: "#174ea6",
-        width: 620
+        width: 620,
+        willClose: () => {
+            document.body.classList.remove("disclaimer-open");
+        }
     });
 }
 

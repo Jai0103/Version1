@@ -457,12 +457,13 @@ function resetFlashcards() {
     renderFlashcard();
 }
 
-function showDisclaimer() {
-    const gateModal = document.querySelector(".gate-modal");
+function closeDisclaimerModal() {
+    const modal = $("disclaimerModal");
 
-    if (gateModal) {
-        gateModal.style.display = "none";
+    if (modal) {
+        modal.hidden = true;
     }
+}
 
     notify({
         title: "Disclaimer",
@@ -638,5 +639,6 @@ window.showFinalResult = showFinalResult;
 window.flipCard = flipCard;
 window.nextFlashcard = nextFlashcard;
 window.previousFlashcard = previousFlashcard;
+window.closeDisclaimerModal = closeDisclaimerModal;
 window.goToFlashcard = goToFlashcard;
 window.resetFlashcards = resetFlashcards;

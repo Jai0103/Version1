@@ -1,0 +1,561 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --blue: #0d6efd;
+    --blue-dark: #0b5ed7;
+    --blue-light: #e8f0fe;
+    --green: #188038;
+    --green-light: #e6f4ea;
+    --red: #d93025;
+    --red-light: #fce8e6;
+    --ink: #1a2a3a;
+    --ink-light: #475467;
+    --muted: #667085;
+    --line: #e2e8f0;
+    --surface: #ffffff;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Inter', -apple-system, 'Segoe UI', Tahoma, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px 16px 32px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e6f0fa 100%);
+    color: var(--ink);
+}
+
+/* Login Gate - Fixed Version (No backdrop-filter issue) */
+.gate-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 20px;
+}
+
+.gate-modal {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 32px 28px;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gate-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.gate-modal h2 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--blue-dark);
+}
+
+.gate-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+
+.gate-modal input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.gate-modal input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.gate-modal button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    background: var(--blue);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gate-modal button:hover {
+    background: var(--blue-dark);
+    transform: translateY(-1px);
+}
+
+.error-msg {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 16px;
+    min-height: 20px;
+}
+
+.gate-footer {
+    display: block;
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* Main App */
+.app {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.top-header {
+    margin-bottom: 20px;
+}
+
+.site-logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+h1 {
+    text-align: center;
+    font-size: clamp(22px, 5vw, 32px);
+    margin-bottom: 24px;
+    color: var(--ink);
+}
+
+/* Toolbar */
+.toolbar {
+    margin-bottom: 20px;
+}
+
+.mode-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    background: var(--blue-light);
+    padding: 6px;
+    border-radius: 16px;
+}
+
+.mode-tabs button {
+    flex: 1;
+    margin: 0;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--blue-dark);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-tabs button.active {
+    background: white;
+    box-shadow: var(--shadow-sm);
+    color: var(--blue);
+}
+
+.settings-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.settings-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Panels */
+.panel {
+    display: none;
+}
+
+.panel.active {
+    display: block;
+}
+
+/* Navigation */
+.nav-icon-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+}
+
+.nav-overlay.show {
+    display: block;
+}
+
+.nav-popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(450px, 90%);
+    max-height: 80vh;
+    background: white;
+    border-radius: 24px;
+    z-index: 1002;
+    overflow: hidden;
+}
+
+.nav-popup.show {
+    display: block;
+}
+
+.nav-panel {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.nav-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.question-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 8px;
+}
+
+.nav-btn {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.nav-btn.active {
+    background: var(--blue);
+    color: white;
+    border-color: var(--blue);
+}
+
+.nav-btn.correct {
+    background: var(--green-light);
+    color: var(--green);
+    border-color: var(--green);
+}
+
+.nav-btn.wrong {
+    background: var(--red-light);
+    color: var(--red);
+    border-color: var(--red);
+}
+
+/* Quiz Status */
+.quiz-status {
+    margin-bottom: 20px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 500;
+    color: var(--ink-light);
+}
+
+.progress-track {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#quizProgressBar, #flashProgressBar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), #20c997);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+/* Quiz Card */
+.quiz-card, .result-card, .review-card {
+    background: var(--surface);
+    padding: 28px;
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+}
+
+.question-text {
+    font-size: clamp(18px, 4vw, 22px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 24px;
+}
+
+.option {
+    display: block;
+    margin-bottom: 12px;
+}
+
+.option input {
+    display: none;
+}
+
+.option span {
+    display: block;
+    padding: 14px 16px;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.option span:hover {
+    border-color: var(--blue);
+    background: var(--blue-light);
+}
+
+.option input:checked + span {
+    background: var(--blue-light);
+    border-color: var(--blue);
+    font-weight: 600;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    background: var(--blue);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: var(--blue-dark);
+    transform: translateY(-1px);
+}
+
+.secondary-btn {
+    background: white;
+    color: var(--blue);
+    border: 2px solid var(--blue);
+}
+
+.secondary-btn:hover {
+    background: var(--blue-light);
+}
+
+.result-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.result-actions button {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Flashcard */
+.flashcard {
+    perspective: 1000px;
+    min-height: 450px;
+}
+
+.flashcard-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 450px;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+}
+
+.flashcard-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, #f0f9ff, #e8f0fe);
+}
+
+.answer-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--blue-dark);
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin: 16px 0;
+}
+
+.explanation-text {
+    color: var(--ink-light);
+    line-height: 1.6;
+}
+
+.card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.card-actions button {
+    flex: 1;
+}
+
+/* Review Items */
+.review-item {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.review-item.correct {
+    border-left: 4px solid var(--green);
+}
+
+.review-item.wrong {
+    border-left: 4px solid var(--red);
+}
+
+/* Footer */
+.page-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.page-footer a {
+    color: var(--blue);
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    body {
+        padding: 16px;
+    }
+    
+    .quiz-card, .result-card, .review-card {
+        padding: 18px;
+    }
+    
+    .flashcard-face {
+        padding: 20px;
+    }
+    
+    .status-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+    }
+    
+    .result-actions button {
+        width: 100%;
+    }
+    
+    .card-actions {
+        flex-direction: column;
+    }
+}

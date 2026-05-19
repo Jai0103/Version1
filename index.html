@@ -5,26 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UAPL Theory Mock Test | Apollo Global Academy</title>
     <meta name="theme-color" content="#174ea6">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260519c">
+
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <div id="gate" class="gate-overlay" aria-labelledby="gateTitle">
         <form class="gate-modal" id="gateForm">
-           <div class="gate-brand">
-    <img src="AGA_Logo_fullcolor_Horizontal.png" alt="Apollo Global Academy" class="gate-logo" onerror="this.style.display='none'">
-</div>
-            <h1 id="gateTitle">UAPL Theory Mock Test</h1>
-            <p class="gate-subtitle">Enter your learner access code to continue.</p>
+            <div class="gate-brand">
+                <img src="AGA_Logo_fullcolor_Horizontal.png" alt="Apollo Global Academy" class="gate-logo" onerror="this.style.display='none'">
+            </div>
+
+            <h1 id="gateTitle">UAPL Theory Mock Test Portal</h1>
+            <p class="gate-subtitle">Practice questions and flashcards for UAPL theory preparation.</p>
 
             <label class="sr-only" for="accessCode">Access code</label>
             <input type="password" id="accessCode" placeholder="Access code" autocomplete="off" required>
-            <button type="submit">Sign In</button>
+
+            <button type="submit">
+                <i data-lucide="log-in"></i>
+                <span>Sign In</span>
+            </button>
+
             <p id="errorMsg" class="error-msg" aria-live="polite"></p>
-            <small>Authorized learners only</small>
+            <small>Authorized learners only · <a href="#" id="gateDisclaimerLink">Disclaimer</a></small>
         </form>
     </div>
 
@@ -35,23 +43,26 @@
                 <div>
                     <p class="eyebrow">Apollo Global Academy</p>
                     <h1>UAPL Theory Mock Test</h1>
+                    <p class="version-note">Question bank updated: May 2026</p>
                 </div>
             </div>
-<button id="navToggle" class="nav-icon-btn" type="button" onclick="openNavigation()" aria-label="Open question navigation">
-    <i data-lucide="menu"></i>
-</button>
+
+            <button id="navToggle" class="nav-icon-btn" type="button" onclick="openNavigation()" aria-label="Open question navigation">
+                <i data-lucide="menu"></i>
+            </button>
         </header>
 
         <section class="control-bar" aria-label="Study controls">
             <div class="mode-tabs" role="tablist" aria-label="Study mode">
-<button id="quizTab" class="active tab-btn" type="button" onclick="switchMode('quiz')" role="tab" aria-selected="true">
-    <i data-lucide="circle-check"></i>
-    <span>Quiz Mode</span>
-</button>
-<button id="flashTab" class="tab-btn" type="button" onclick="switchMode('flash')" role="tab" aria-selected="false">
-    <i data-lucide="book-open"></i>
-    <span>Flashcards</span>
-</button>
+                <button id="quizTab" class="active tab-btn" type="button" onclick="switchMode('quiz')" role="tab" aria-selected="true">
+                    <i data-lucide="circle-check"></i>
+                    <span>Quiz Mode</span>
+                </button>
+
+                <button id="flashTab" class="tab-btn" type="button" onclick="switchMode('flash')" role="tab" aria-selected="false">
+                    <i data-lucide="book-open"></i>
+                    <span>Flashcards</span>
+                </button>
             </div>
 
             <div class="settings-row">
@@ -59,11 +70,16 @@
                     <input type="checkbox" id="shuffleToggle">
                     <span>Shuffle</span>
                 </label>
+
                 <label class="switch-control">
                     <input type="checkbox" id="timerToggle">
                     <span>Timer</span>
                 </label>
-                <button class="secondary-btn" type="button" onclick="startNewQuiz()">New Quiz</button>
+
+                <button class="secondary-btn" type="button" onclick="startNewQuiz()">
+                    <i data-lucide="rotate-ccw"></i>
+                    <span>New Quiz</span>
+                </button>
             </div>
         </section>
 
@@ -75,10 +91,12 @@
                     <p class="eyebrow">Quiz</p>
                     <h2>Question Map</h2>
                 </div>
+
                 <button class="nav-close" type="button" onclick="closeNavigation()" aria-label="Close navigation">
-    <i data-lucide="x"></i>
-</button>
+                    <i data-lucide="x"></i>
+                </button>
             </div>
+
             <div id="quizNav" class="question-nav"></div>
         </aside>
 
@@ -88,10 +106,12 @@
                     <p class="eyebrow">Flashcards</p>
                     <h2>Card Map</h2>
                 </div>
-               <button class="nav-close" type="button" onclick="closeNavigation()" aria-label="Close navigation">
-    <i data-lucide="x"></i>
-</button>
+
+                <button class="nav-close" type="button" onclick="closeNavigation()" aria-label="Close navigation">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
+
             <div id="flashNav" class="question-nav"></div>
         </aside>
 
@@ -103,13 +123,27 @@
                         <span id="timerDisplay">Timer Off</span>
                         <span id="scoreCounter">Score: 0</span>
                     </div>
-                    <div class="progress-track"><div id="quizProgressBar"></div></div>
+
+                    <div class="summary-row">
+                        <span id="answeredCounter">Answered 0 / 0</span>
+                        <span id="accuracyCounter">Accuracy 0%</span>
+                    </div>
+
+                    <div class="progress-track">
+                        <div id="quizProgressBar"></div>
+                    </div>
                 </div>
 
                 <article id="quizCard" class="content-card">
+                    <p class="eyebrow">Question</p>
                     <div id="quizQuestionText" class="question-text"></div>
                     <div id="quizOptionsBox" class="options-grid"></div>
-                    <button class="primary-btn" type="button" onclick="checkAnswer()">Submit Answer</button>
+                    <div id="answerFeedback" class="answer-feedback" hidden></div>
+
+                    <button class="primary-btn sticky-action" type="button" onclick="checkAnswer()">
+                        <i data-lucide="send"></i>
+                        <span>Submit Answer</span>
+                    </button>
                 </article>
 
                 <article id="resultCard" class="content-card result-card" hidden>
@@ -117,10 +151,22 @@
                     <h2>Quiz Result</h2>
                     <p id="finalScore" class="final-score"></p>
                     <p id="finalMessage" class="final-message"></p>
+
                     <div class="result-actions">
-                        <button type="button" onclick="showReview(false)">Review All</button>
-                        <button type="button" onclick="showReview(true)">Review Mistakes</button>
-                        <button class="secondary-btn" type="button" onclick="startNewQuiz()">Retake Quiz</button>
+                        <button type="button" onclick="showReview(false)">
+                            <i data-lucide="list-checks"></i>
+                            <span>Review All</span>
+                        </button>
+
+                        <button type="button" onclick="showReview(true)">
+                            <i data-lucide="alert-circle"></i>
+                            <span>Review Mistakes</span>
+                        </button>
+
+                        <button class="secondary-btn" type="button" onclick="startNewQuiz()">
+                            <i data-lucide="rotate-ccw"></i>
+                            <span>Retake Quiz</span>
+                        </button>
                     </div>
                 </article>
 
@@ -135,7 +181,10 @@
                         <span id="flashCounter">Card 1</span>
                         <span>Flip to reveal answer</span>
                     </div>
-                    <div class="progress-track"><div id="flashProgressBar"></div></div>
+
+                    <div class="progress-track">
+                        <div id="flashProgressBar"></div>
+                    </div>
                 </div>
 
                 <article id="flashcard" class="flashcard" onclick="flipCard()" role="button" tabindex="0" aria-label="Flip flashcard">
@@ -145,6 +194,7 @@
                             <div id="flashQuestionText" class="question-text"></div>
                             <span class="card-hint">Tap card or press Space</span>
                         </div>
+
                         <div class="flashcard-face flashcard-back">
                             <p class="eyebrow">Answer</p>
                             <p id="flashAnswerText" class="answer-text"></p>
@@ -154,21 +204,33 @@
                 </article>
 
                 <div class="card-actions">
-                    <button class="secondary-btn" type="button" onclick="previousFlashcard()">Previous</button>
-                    <button type="button" onclick="nextFlashcard()">Next</button>
-                    <button class="secondary-btn" type="button" onclick="resetFlashcards()">Restart</button>
+                    <button class="secondary-btn" type="button" onclick="previousFlashcard()">
+                        <i data-lucide="arrow-left"></i>
+                        <span>Previous</span>
+                    </button>
+
+                    <button type="button" onclick="nextFlashcard()">
+                        <i data-lucide="arrow-right"></i>
+                        <span>Next</span>
+                    </button>
+
+                    <button class="secondary-btn" type="button" onclick="resetFlashcards()">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span>Restart</span>
+                    </button>
                 </div>
             </main>
         </section>
 
         <footer class="page-footer">
-            <span>&copy; Copyright 2026. Apollo Global Academy. All Rights Reserved</span>
-            <span>Design &amp; Build by: Jairus</span>
+            <span>&copy; 2026 Apollo Global Academy</span>
+            <span>Built by Jairus</span>
             <a href="#" id="disclaimerLink">Disclaimer</a>
         </footer>
     </div>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
     <script src="questions.js"></script>
-    <script src="app.js?v=20260519c"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

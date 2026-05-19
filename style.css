@@ -267,6 +267,10 @@ input:focus-visible {
 }
 
 .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     min-width: 132px;
     background: transparent;
     color: var(--primary);
@@ -279,6 +283,54 @@ input:focus-visible {
     box-shadow: 0 4px 12px rgba(23, 78, 166, 0.12);
 }
 
+.tab-icon {
+    position: relative;
+    display: inline-block;
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.quiz-icon {
+    border: 2px solid currentColor;
+    border-radius: 5px;
+}
+
+.quiz-icon::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    transform: rotate(42deg);
+}
+
+.card-icon {
+    border: 2px solid currentColor;
+    border-radius: 4px;
+}
+
+.card-icon::before,
+.card-icon::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 999px;
+}
+
+.card-icon::before {
+    top: 5px;
+}
+
+.card-icon::after {
+    top: 10px;
+}
 .settings-row {
     display: flex;
     align-items: center;

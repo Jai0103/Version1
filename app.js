@@ -14,6 +14,16 @@ const ACCESS_CODE = "UAPL2026";
 const $ = (id) => document.getElementById(id);
 const getQuestionsGlobal = () => (typeof QUESTIONS !== "undefined" ? QUESTIONS : window.QUESTIONS);
 
+function notify(options) {
+    if (window.Swal && typeof window.Swal.fire === "function") {
+        return window.Swal.fire(options);
+    }
+
+    const message = options.text || options.title || "Notice";
+    window.alert(message);
+    return Promise.resolve();
+}
+
 function hasQuestions() {
     const source = getQuestionsGlobal();
     return Array.isArray(source) && source.length > 0;
@@ -83,6 +93,11 @@ function loadProgress() {
 }
 
 function startNewQuiz() {
+    if (!hasQuestions()) {
+        showQuestionBankError();
+        return;
+    }
+
     clearInterval(timer);
     localStorage.removeItem(STORAGE_KEY);
     setupQuestions();
@@ -98,3 +113,436 @@ function startNewQuiz() {
     if ($("timerToggle").checked) {
         startTimer();
     } else {
+        updateTimerDisplay();
+    }
+
+    renderQuiz();
+    renderFlashcard();
+    saveProgress();
+}
+
+function startTimer() {
+    clearInterval(timer);
+    updateTimerDisplay();
+
+    timer = setInterval(() => {
+        secondsLeft = Math.max(0, secondsLeft - 1);
+        updateTimerDisplay();
+        saveProgress();
+
+        if (secondsLeft <= 0) {
+            clearInterval(timer);
+            showFinalResult();
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    if (!$("timerToggle").checked) {
+        $("timerDisplay").textContent = "Timer Off";
+        return;
+    }
+
+    const minutes = Math.floor(secondsLeft / 60);
+    const seconds = secondsLeft % 60;
+    $("timerDisplay").textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function switchMode(mode) {
+    const isQuiz = mode === "quiz";
+    $("quizPanel").classList.toggle("active", isQuiz);
+    $("flashPanel").classList.toggle("active", !isQuiz);
+    $("quizTab").classList.toggle("active", isQuiz);
+    $("flashTab").classList.toggle("active", !isQuiz);
+    $("quizTab").setAttribute("aria-selected", String(isQuiz));
+    $("flashTab").setAttribute("aria-selected", String(!isQuiz));
+    closeNavigation();
+    if (questions.length) {
+        renderQuiz();
+        renderFlashcard();
+    }
+}
+
+function openNavigation() {
+    const isQuizMode = $("quizPanel").classList.contains("active");
+    $("quizNavPanel").classList.toggle("show", isQuizMode);
+    $("flashNavPanel").classList.toggle("show", !isQuizMode);
+    $("navOverlay").classList.add("show");
+}
+
+function closeNavigation() {
+    $("quizNavPanel").classList.remove("show");
+    $("flashNavPanel").classList.remove("show");
+    $("navOverlay").classList.remove("show");
+}
+
+function getScore() {
+    return userAnswers.reduce((total, answer, index) => {
+        return answer === questions[index]?.answer ? total + 1 : total;
+    }, 0);
+}
+
+function renderQuizNav() {
+    $("quizNav").innerHTML = questions.map((question, index) => {
+        const state = userAnswers[index] === null
+            ? ""
+            : userAnswers[index] === question.answer ? " correct" : " wrong";
+        const active = index === currentQuestion ? " active" : "";
+        return `<button class="nav-btn${state}${active}" type="button" onclick="goToQuestion(${index})">${index + 1}</button>`;
+    }).join("");
+}
+
+function renderFlashNav() {
+    $("flashNav").innerHTML = questions.map((_, index) => {
+        const active = index === currentFlashcard ? " active" : "";
+        return `<button class="nav-btn${active}" type="button" onclick="goToFlashcard(${index})">${index + 1}</button>`;
+    }).join("");
+}
+
+function renderQuiz() {
+    if (!questions.length) {
+        showQuestionBankError();
+        return;
+    }
+
+    const question = questions[currentQuestion];
+    const letters = ["A", "B", "C", "D"];
+    const answeredCount = userAnswers.filter((answer) => answer !== null).length;
+    const submitButton = $("quizCard").querySelector(".primary-btn");
+
+    setVisible($("resultCard"), false);
+    setVisible($("reviewCard"), false);
+    setVisible($("quizCard"), true);
+    if (submitButton) submitButton.hidden = false;
+    $("quizCounter").textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+    $("scoreCounter").textContent = `Score: ${getScore()}`;
+    $("quizProgressBar").style.width = `${(answeredCount / questions.length) * 100}%`;
+    $("quizQuestionText").textContent = `Q${currentQuestion + 1}: ${question.question}`;
+    $("quizOptionsBox").innerHTML = question.options.map((option, index) => {
+        const checked = userAnswers[currentQuestion] === index ? "checked" : "";
+        const disabled = userAnswers[currentQuestion] !== null ? "disabled" : "";
+        return `
+            <label class="option">
+                <input type="radio" name="answer" value="${index}" ${checked} ${disabled}>
+                <span><b>${letters[index]}</b>${option}</span>
+            </label>
+        `;
+    }).join("");
+
+    renderQuizNav();
+    saveProgress();
+}
+
+function goToQuestion(index) {
+    currentQuestion = index;
+    renderQuiz();
+    closeNavigation();
+}
+
+function checkAnswer() {
+    if (!questions.length) {
+        showQuestionBankError();
+        return;
+    }
+
+    const question = questions[currentQuestion];
+
+    if (userAnswers[currentQuestion] !== null) {
+        notify({
+            title: "Already answered",
+            html: `<strong>Correct answer:</strong> ${question.options[question.answer]}<br><br>${question.explanation}`,
+            icon: "info",
+            confirmButtonColor: "#174ea6"
+        });
+        return;
+    }
+
+    const selected = document.querySelector('input[name="answer"]:checked');
+    if (!selected) {
+        notify({
+            title: "Choose an answer",
+            text: "Please select an option before submitting.",
+            icon: "warning",
+            confirmButtonColor: "#174ea6"
+        });
+        return;
+    }
+
+    const selectedAnswer = Number(selected.value);
+    const isCorrect = selectedAnswer === question.answer;
+    userAnswers[currentQuestion] = selectedAnswer;
+    saveProgress();
+
+    notify({
+        title: isCorrect ? "Correct" : "Incorrect",
+        html: isCorrect
+            ? question.explanation
+            : `<strong>Correct answer:</strong> ${question.options[question.answer]}<br><br>${question.explanation}`,
+        icon: isCorrect ? "success" : "error",
+        confirmButtonText: currentQuestion === questions.length - 1 ? "Finish" : "Continue",
+        confirmButtonColor: "#174ea6"
+    }).then(() => {
+        if (currentQuestion < questions.length - 1) {
+            currentQuestion++;
+            renderQuiz();
+        } else {
+            showFinalResult();
+        }
+    });
+}
+
+function showFinalResult() {
+    if (!questions.length) {
+        showQuestionBankError();
+        return;
+    }
+
+    clearInterval(timer);
+
+    const total = questions.length;
+    const finalScore = getScore();
+    const percentage = Math.round((finalScore / total) * 100);
+
+    setVisible($("quizCard"), false);
+    setVisible($("reviewCard"), false);
+    setVisible($("resultCard"), true);
+    $("quizProgressBar").style.width = "100%";
+    $("quizCounter").textContent = `Completed ${total} questions`;
+    $("scoreCounter").textContent = `Final Score: ${finalScore}/${total}`;
+    $("finalScore").textContent = `${finalScore} / ${total} (${percentage}%)`;
+    $("finalMessage").textContent = percentage >= 80
+        ? "Great work. You have a strong grasp of the material."
+        : percentage >= 50
+            ? "Good effort. Review your mistakes and try again."
+            : "Keep practicing with flashcards, then retake the quiz.";
+
+    renderQuizNav();
+    saveProgress();
+}
+
+function showReview(onlyMistakes) {
+    const items = questions.map((question, index) => {
+        const userAnswer = userAnswers[index];
+        const isCorrect = userAnswer === question.answer;
+        if (onlyMistakes && isCorrect) return "";
+
+        return `
+            <div class="review-item ${isCorrect ? "correct" : "wrong"}">
+                <strong>Q${index + 1}: ${question.question}</strong>
+                <p>Your answer: ${userAnswer === null ? "Not answered" : question.options[userAnswer]}</p>
+                <p>Correct answer: ${question.options[question.answer]}</p>
+                <p>${question.explanation}</p>
+            </div>
+        `;
+    }).join("");
+
+    setVisible($("resultCard"), false);
+    setVisible($("quizCard"), false);
+    setVisible($("reviewCard"), true);
+    $("reviewCard").innerHTML = `
+        <div class="review-header">
+            <div>
+                <p class="eyebrow">Review</p>
+                <h2>${onlyMistakes ? "Mistakes" : "All Questions"}</h2>
+            </div>
+            <button class="secondary-btn" type="button" onclick="showFinalResult()">Back</button>
+        </div>
+        ${items || "<p>No mistakes to review. Excellent work.</p>"}
+    `;
+}
+
+function renderFlashcard() {
+    if (!questions.length) {
+        showQuestionBankError();
+        return;
+    }
+
+    const question = questions[currentFlashcard];
+    $("flashcard").classList.remove("flipped");
+    $("flashCounter").textContent = `Card ${currentFlashcard + 1} of ${questions.length}`;
+    $("flashProgressBar").style.width = `${((currentFlashcard + 1) / questions.length) * 100}%`;
+    $("flashQuestionText").textContent = `Q${currentFlashcard + 1}: ${question.question}`;
+    $("flashAnswerText").textContent = question.options[question.answer];
+    $("flashExplanationText").textContent = question.explanation;
+
+    renderFlashNav();
+    saveProgress();
+}
+
+function flipCard() {
+    if (!questions.length) return;
+    $("flashcard").classList.toggle("flipped");
+}
+
+function nextFlashcard() {
+    if (!questions.length) return;
+    currentFlashcard = currentFlashcard < questions.length - 1 ? currentFlashcard + 1 : 0;
+    renderFlashcard();
+}
+
+function previousFlashcard() {
+    if (!questions.length) return;
+    currentFlashcard = currentFlashcard > 0 ? currentFlashcard - 1 : questions.length - 1;
+    renderFlashcard();
+}
+
+function goToFlashcard(index) {
+    currentFlashcard = index;
+    renderFlashcard();
+    closeNavigation();
+}
+
+function resetFlashcards() {
+    currentFlashcard = 0;
+    renderFlashcard();
+}
+
+function showDisclaimer() {
+    notify({
+        title: "Disclaimer",
+        icon: "info",
+        html: `
+            <div class="disclaimer-text">
+                <p>This project is an <b>independent educational resource</b> and is <b>not affiliated with, endorsed by, or connected to the Civil Aviation Authority of Singapore (CAAS)</b>.</p>
+                <p>All questions and materials are intended strictly for <b>practice and learning purposes only</b>. They are not official examination content.</p>
+                <p>Users should refer to official CAAS publications, guidelines, and approved training providers for current and authoritative information.</p>
+            </div>
+        `,
+        confirmButtonText: "I Understand",
+        confirmButtonColor: "#174ea6",
+        width: 620
+    });
+}
+
+function showQuestionBankError() {
+    clearInterval(timer);
+    questions = [];
+    userAnswers = [];
+
+    setVisible($("quizCard"), true);
+    setVisible($("resultCard"), false);
+    setVisible($("reviewCard"), false);
+    $("quizCounter").textContent = "Setup Required";
+    $("timerDisplay").textContent = "Timer Off";
+    $("scoreCounter").textContent = "0 questions";
+    $("quizProgressBar").style.width = "0%";
+    $("quizQuestionText").textContent = "Question bank not loaded";
+    $("quizOptionsBox").innerHTML = `
+        <div class="setup-note">
+            <p>Place your existing <strong>questions.js</strong> file in the same folder as <strong>index.html</strong>.</p>
+            <p>The file must define <strong>const QUESTIONS = [...]</strong>. Your pasted question array is fine; it just needs to be saved as <strong>questions.js</strong>.</p>
+        </div>
+    `;
+    const submitButton = $("quizCard").querySelector(".primary-btn");
+    if (submitButton) submitButton.hidden = true;
+    $("quizNav").innerHTML = "";
+    $("flashNav").innerHTML = "";
+    $("flashQuestionText").textContent = "Question bank not loaded";
+    $("flashAnswerText").textContent = "Add questions.js beside index.html.";
+    $("flashExplanationText").textContent = "";
+}
+
+function grantAccess() {
+    localStorage.setItem(ACCESS_KEY, "true");
+    $("gate").classList.add("leaving");
+    setTimeout(() => {
+        setVisible($("gate"), false);
+        setVisible($("app"), true);
+        initializeApp();
+    }, 220);
+}
+
+function checkAccess() {
+    const codeInput = $("accessCode");
+    const errorMsg = $("errorMsg");
+
+    if (codeInput.value.trim() === ACCESS_CODE) {
+        errorMsg.textContent = "";
+        grantAccess();
+        return;
+    }
+
+    errorMsg.textContent = "Invalid access code. Please try again.";
+    codeInput.value = "";
+    codeInput.focus();
+    $("gateForm").classList.remove("shake");
+    void $("gateForm").offsetWidth;
+    $("gateForm").classList.add("shake");
+}
+
+function initializeApp() {
+    if (!hasQuestions()) {
+        console.warn("QUESTIONS array is missing or empty. Check questions.js.");
+        showQuestionBankError();
+        return;
+    }
+
+    if (!loadProgress()) {
+        setupQuestions();
+        userAnswers = Array(questions.length).fill(null);
+    }
+
+    if ($("timerToggle").checked && secondsLeft > 0) {
+        startTimer();
+    } else {
+        updateTimerDisplay();
+    }
+
+    renderQuiz();
+    renderFlashcard();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    $("gateForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        checkAccess();
+    });
+
+    $("timerToggle").addEventListener("change", startNewQuiz);
+    $("shuffleToggle").addEventListener("change", startNewQuiz);
+    $("disclaimerLink").addEventListener("click", (event) => {
+        event.preventDefault();
+        showDisclaimer();
+    });
+    $("flashcard").addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            flipCard();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeNavigation();
+        if (!$("flashPanel").classList.contains("active")) return;
+        if (event.key === "ArrowRight") nextFlashcard();
+        if (event.key === "ArrowLeft") previousFlashcard();
+        if (event.key === " ") {
+            event.preventDefault();
+            flipCard();
+        }
+    });
+
+    if (localStorage.getItem(ACCESS_KEY) === "true") {
+        setVisible($("gate"), false);
+        setVisible($("app"), true);
+        initializeApp();
+    } else {
+        $("accessCode").focus();
+    }
+});
+
+window.checkAccess = checkAccess;
+window.startNewQuiz = startNewQuiz;
+window.switchMode = switchMode;
+window.openNavigation = openNavigation;
+window.closeNavigation = closeNavigation;
+window.goToQuestion = goToQuestion;
+window.checkAnswer = checkAnswer;
+window.showReview = showReview;
+window.showFinalResult = showFinalResult;
+window.flipCard = flipCard;
+window.nextFlashcard = nextFlashcard;
+window.previousFlashcard = previousFlashcard;
+window.goToFlashcard = goToFlashcard;
+window.resetFlashcards = resetFlashcards;

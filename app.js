@@ -9,7 +9,7 @@ let secondsLeft = 0;
 
 const STORAGE_KEY = "uapl_mock_test_progress_v3";
 const ACCESS_KEY = "uapl_mock_test_access_granted";
-const ACCESS_CODE_HASH = "8b25d2e51f732d9249a6d38c076f67960f72fd623bd629e372404c2a85be28c5";
+const ACCESS_CODE_HASH = "8a50eaec8a2f8f1619c4a58c8b16a5e22b667e6e2ee8d3928812993e75d4b5eb";
 
 const $ = (id) => document.getElementById(id);
 const getQuestionsGlobal = () => (typeof QUESTIONS !== "undefined" ? QUESTIONS : window.QUESTIONS);

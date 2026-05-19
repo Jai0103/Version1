@@ -2,156 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UAPL Theory Mock Test | Apollo Global Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+    <div id="gate" class="gate-overlay" aria-labelledby="gateTitle">
+        <form class="gate-modal" id="gateForm">
+            <div class="gate-brand">
+                <img src="AGA_Logo_fullcolor_Horizontal.png" alt="Apollo Global Academy" class="gate-logo" onerror="this.style.display='none'">
+                <div class="gate-mark" aria-hidden="true">U</div>
+            </div>
+            <h1 id="gateTitle">UAPL Training Portal</h1>
+            <p class="gate-subtitle">Enter your learner access code to continue.</p>
 
-<!-- ACCESS GATE - FIXED VERSION -->
-<div id="gate" class="gate-overlay">
-    <div class="gate-modal">
-        <div class="gate-icon">✈️</div>
-        <h2>UAPL Training Portal</h2>
-        <p class="gate-subtitle">Enter access code to continue</p>
-        
-        <input type="password" id="accessCode" placeholder="Enter access code" autocomplete="off">
-        <button onclick="checkAccess()">Sign In</button>
-        <p id="errorMsg" class="error-msg"></p>
-        <small class="gate-footer">Authorized learners only</small>
-    </div>
-</div>
-
-<!-- MAIN APP -->
-<div id="app" class="app" style="display: none;">
-    <header class="top-header">
-        <img src="AGA_Logo_fullcolor_Horizontal.png" alt="Apollo Global Academy Logo" class="site-logo" onerror="this.style.display='none'">
-    </header>
-
-    <h1>UAPL Theory Mock Test</h1>
-
-    <div class="toolbar">
-        <div class="mode-tabs" role="tablist">
-            <button id="quizTab" class="active tab-btn" onclick="switchMode('quiz')">
-                <span class="tab-icon">✓</span><span>Quiz Mode</span>
-            </button>
-            <button id="flashTab" class="tab-btn" onclick="switchMode('flash')">
-                <span class="tab-icon">▣</span><span>Flashcard Mode</span>
-            </button>
-        </div>
-
-        <div class="settings-row">
-            <label><input type="checkbox" id="shuffleToggle"> Shuffle Questions</label>
-            <label><input type="checkbox" id="timerToggle"> Timer (1 min/question)</label>
-        </div>
+            <label class="sr-only" for="accessCode">Access code</label>
+            <input type="password" id="accessCode" placeholder="Access code" autocomplete="off" required>
+            <button type="submit">Sign In</button>
+            <p id="errorMsg" class="error-msg" aria-live="polite"></p>
+            <small>Authorized learners only</small>
+        </form>
     </div>
 
-    <button id="navToggle" class="nav-icon-btn" onclick="openNavigation()" aria-label="Open navigation">☰</button>
-    
-    <div id="navOverlay" class="nav-overlay" onclick="closeNavigation()"></div>
-
-    <aside id="quizNavPanel" class="nav-panel nav-popup">
-        <div class="nav-header">
-            <h2>Quiz Navigation</h2>
-            <button class="nav-close" onclick="closeNavigation()" aria-label="Close">×</button>
-        </div>
-        <div id="quizNav" class="question-nav"></div>
-    </aside>
-
-    <aside id="flashNavPanel" class="nav-panel nav-popup">
-        <div class="nav-header">
-            <h2>Flashcards</h2>
-            <button class="nav-close" onclick="closeNavigation()" aria-label="Close">×</button>
-        </div>
-        <div id="flashNav" class="question-nav"></div>
-    </aside>
-
-    <!-- QUIZ MODE -->
-    <section id="quizPanel" class="panel active">
-        <main>
-            <div class="quiz-status">
-                <div class="status-row">
-                    <span id="quizCounter">Question 1</span>
-                    <span id="timerDisplay">Timer Off</span>
-                    <span id="scoreCounter">Score: 0</span>
+    <div id="app" class="app" hidden>
+        <header class="app-header">
+            <div class="brand-block">
+                <img src="AGA_Logo_fullcolor_Horizontal.png" alt="Apollo Global Academy Logo" class="site-logo" onerror="this.style.display='none'">
+                <div>
+                    <p class="eyebrow">Apollo Global Academy</p>
+                    <h1>UAPL Theory Mock Test</h1>
                 </div>
-                <div class="progress-track"><div id="quizProgressBar"></div></div>
             </div>
+            <button id="navToggle" class="nav-icon-btn" type="button" onclick="openNavigation()" aria-label="Open question navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </header>
 
-            <div id="quizCard" class="quiz-card">
-                <div id="quizQuestionText" class="question-text"></div>
-                <div id="quizOptionsBox"></div>
-                <button class="icon-btn" onclick="checkAnswer()">
-                    <span class="btn-icon">✓</span><span>Submit Answer</span>
+        <section class="control-bar" aria-label="Study controls">
+            <div class="mode-tabs" role="tablist" aria-label="Study mode">
+                <button id="quizTab" class="active tab-btn" type="button" onclick="switchMode('quiz')" role="tab" aria-selected="true">
+                    <span aria-hidden="true">✓</span> Quiz
+                </button>
+                <button id="flashTab" class="tab-btn" type="button" onclick="switchMode('flash')" role="tab" aria-selected="false">
+                    <span aria-hidden="true">▣</span> Flashcards
                 </button>
             </div>
 
-            <div id="resultCard" class="result-card" style="display: none;">
-                <h2>Quiz Completed! 🎉</h2>
-                <p id="finalScore"></p>
-                <p id="finalMessage"></p>
-                <div class="result-actions">
-                    <button onclick="showReview(false)">Review All</button>
-                    <button onclick="showReview(true)">Review Mistakes</button>
-                    <button class="secondary-btn" onclick="startNewQuiz()">Retake Quiz</button>
-                </div>
+            <div class="settings-row">
+                <label class="switch-control">
+                    <input type="checkbox" id="shuffleToggle">
+                    <span>Shuffle</span>
+                </label>
+                <label class="switch-control">
+                    <input type="checkbox" id="timerToggle">
+                    <span>Timer</span>
+                </label>
+                <button class="secondary-btn" type="button" onclick="startNewQuiz()">New Quiz</button>
             </div>
+        </section>
 
-            <div id="reviewCard" class="review-card" style="display: none;"></div>
-        </main>
-    </section>
+        <div id="navOverlay" class="nav-overlay" onclick="closeNavigation()"></div>
 
-    <!-- FLASHCARD MODE -->
-    <section id="flashPanel" class="panel">
-        <main>
-            <div class="quiz-status">
-                <div class="status-row">
-                    <span id="flashCounter">Card 1</span>
-                    <span>Flip to reveal answer</span>
+        <aside id="quizNavPanel" class="nav-panel" aria-label="Quiz navigation">
+            <div class="nav-header">
+                <div>
+                    <p class="eyebrow">Quiz</p>
+                    <h2>Question Map</h2>
                 </div>
-                <div class="progress-track"><div id="flashProgressBar"></div></div>
+                <button class="nav-close" type="button" onclick="closeNavigation()" aria-label="Close navigation">×</button>
             </div>
+            <div id="quizNav" class="question-nav"></div>
+        </aside>
 
-            <div id="flashcard" class="flashcard">
-                <div class="flashcard-inner">
-                    <div class="flashcard-face flashcard-front">
-                        <div id="flashQuestionText" class="question-text"></div>
-                        <button class="icon-btn flip-btn" onclick="flipCard()">
-                            <span class="btn-icon">↻</span><span>Flip Card</span>
-                        </button>
+        <aside id="flashNavPanel" class="nav-panel" aria-label="Flashcard navigation">
+            <div class="nav-header">
+                <div>
+                    <p class="eyebrow">Flashcards</p>
+                    <h2>Card Map</h2>
+                </div>
+                <button class="nav-close" type="button" onclick="closeNavigation()" aria-label="Close navigation">×</button>
+            </div>
+            <div id="flashNav" class="question-nav"></div>
+        </aside>
+
+        <section id="quizPanel" class="panel active">
+            <main>
+                <div class="status-card">
+                    <div class="status-row">
+                        <span id="quizCounter">Question 1</span>
+                        <span id="timerDisplay">Timer Off</span>
+                        <span id="scoreCounter">Score: 0</span>
                     </div>
-
-                    <div class="flashcard-face flashcard-back">
-                        <h2>Answer</h2>
-                        <p id="flashAnswerText" class="answer-text"></p>
-                        <p id="flashExplanationText" class="explanation-text"></p>
-                        <button class="icon-btn show-question-btn" onclick="flipCard()">
-                            <span class="btn-icon">←</span><span>Show Question</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-actions">
-                <button class="secondary-btn icon-btn" onclick="previousFlashcard()">
-                    <span class="btn-icon">←</span><span>Previous</span>
-                </button>
-                <button class="icon-btn" onclick="nextFlashcard()">
-                    <span class="btn-icon">→</span><span>Next</span>
-                </button>
-                <button class="secondary-btn" onclick="resetFlashcards()">Restart</button>
-            </div>
-        </main>
-    </section>
-
-    <footer class="page-footer">
-        &copy; Copyright 2026. Apollo Global Academy. All Rights Reserved | Design &amp; Build by: Jairus | 
-        <a href="#" id="disclaimerLink">Disclaimer</a>
-    </footer>
-</div>
-
-<script src="questions.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+                    <div class="progress-track"><div id="quizProgressBar"></div></div>

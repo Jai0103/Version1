@@ -913,5 +913,19 @@ main {
 .swal2-container {
     z-index: 999999 !important;
 }
+
+    .swal2-container {
+    z-index: 999999 !important;
+}
+
+body.disclaimer-open .gate-modal {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.98);
+}
+
+body.disclaimer-open .gate-overlay {
+    background: rgba(16, 24, 40, 0.72);
+}
     
 }

@@ -1,4 +1,3 @@
-// Global variables
 let questions = [];
 let currentQuestion = 0;
 let currentFlashcard = 0;
@@ -394,14 +393,20 @@ function showDisclaimer() {
     });
 }
 
-// Login / Access Gate - FIXED VERSION
+// ============================================
+// LOGIN / ACCESS GATE - FIXED & WORKING
+// ============================================
 function checkAccess() {
     const codeInput = document.getElementById("accessCode");
     const code = codeInput.value.trim();
     const correctCode = "UAPL2026";
     const gate = document.getElementById("gate");
+    const errorMsg = document.getElementById("errorMsg");
     
     if (code === correctCode) {
+        // Clear any previous error
+        errorMsg.textContent = "";
+        
         // Smooth transition - hide gate and show app
         gate.style.transition = "opacity 0.3s ease, transform 0.3s ease";
         gate.style.opacity = "0";
@@ -413,10 +418,78 @@ function checkAccess() {
             initializeApp();
         }, 300);
     } else {
-        // Show error message without alert popup
-        const errorMsg = document.getElementById("errorMsg");
+        // Show error message
         errorMsg.textContent = "Invalid access code. Please try again.";
-        errorMsg.style.color = "#d93025";
         
-        // Shake animation for the modal
-        const modal = document.querySelector
+        // Shake animation for error feedback
+        const modal = document.querySelector(".gate-modal");
+        modal.style.animation = "none";
+        setTimeout(() => {
+            modal.style.animation = "slideUp 0.3s ease";
+        }, 10);
+        
+        // Shake effect
+        modal.style.transform = "translateX(0)";
+        setTimeout(() => { modal.style.transform = "translateX(-5px)"; }, 50);
+        setTimeout(() => { modal.style.transform = "translateX(5px)"; }, 100);
+        setTimeout(() => { modal.style.transform = "translateX(0)"; }, 150);
+        
+        // Clear input and focus
+        codeInput.value = "";
+        codeInput.focus();
+    }
+}
+
+// Initialize the app after successful login
+function initializeApp() {
+    // Load or initialize questions
+    if (!loadProgress()) {
+        setupQuestions();
+        userAnswers = Array(questions.length).fill(null);
+    }
+    
+    // Setup timer if enabled
+    if (document.getElementById("timerToggle").checked && secondsLeft > 0) {
+        startTimer();
+    } else {
+        updateTimerDisplay();
+    }
+    
+    // Render both modes
+    renderQuiz();
+    renderFlashcard();
+    
+    // Add event listeners for settings
+    document.getElementById("timerToggle").addEventListener("change", startNewQuiz);
+    document.getElementById("shuffleToggle").addEventListener("change", startNewQuiz);
+    
+    // Keyboard shortcuts for flashcards
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeNavigation();
+        
+        if (document.getElementById("flashPanel").classList.contains("active")) {
+            if (event.key === "ArrowRight") nextFlashcard();
+            if (event.key === "ArrowLeft") previousFlashcard();
+            if (event.key === " " || event.key === "Spacebar") {
+                event.preventDefault();
+                flipCard();
+            }
+        }
+    });
+    
+    // Disclaimer link
+    const disclaimerLink = document.getElementById("disclaimerLink");
+    if (disclaimerLink) {
+        disclaimerLink.addEventListener("click", function(e) {
+            e.preventDefault();
+            showDisclaimer();
+        });
+    }
+    
+    console.log("App initialized successfully");
+}
+
+// Make sure QUESTIONS array exists
+if (typeof QUESTIONS === "undefined") {
+    console.error("QUESTIONS array is not defined! Check questions.js");
+}

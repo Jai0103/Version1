@@ -681,7 +681,7 @@ main {
 }
 
 .disclaimer-text {
-    text-align: left;
+    text-align: justify;
     color: var(--ink-soft);
     line-height: 1.6;
 }

@@ -639,6 +639,5 @@ window.showFinalResult = showFinalResult;
 window.flipCard = flipCard;
 window.nextFlashcard = nextFlashcard;
 window.previousFlashcard = previousFlashcard;
-window.closeDisclaimerModal = closeDisclaimerModal;
 window.goToFlashcard = goToFlashcard;
 window.resetFlashcards = resetFlashcards;

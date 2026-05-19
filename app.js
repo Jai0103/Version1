@@ -198,10 +198,12 @@ function openNavigation() {
     $("navOverlay").classList.add("show");
 }
 
-function closeNavigation() {
-    $("quizNavPanel").classList.remove("show");
-    $("flashNavPanel").classList.remove("show");
-    $("navOverlay").classList.remove("show");
+function showDisclaimer() {
+    const modal = $("disclaimerModal");
+
+    if (modal) {
+        modal.hidden = false;
+    }
 }
 
 function getScore() {

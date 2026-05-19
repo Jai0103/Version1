@@ -493,6 +493,9 @@ function initializeApp() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+     if (window.lucide) {
+        lucide.createIcons();
+    }
     $("gateForm").addEventListener("submit", (event) => {
         event.preventDefault();
         checkAccess();

@@ -110,10 +110,39 @@ input:focus-visible {
     text-align: left;
 }
 
+/* Lift effect on hover for desktop */
+.gate-modal:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 30px 60px rgba(16, 24, 40, 0.15);
+
 .gate-modal.shake {
     animation: shake 0.22s ease;
 }
 
+    /* Floating gradient overlay inside modal */
+.gate-modal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 18px;
+    background: radial-gradient(circle at top left, rgba(23, 78, 166, 0.05), transparent 60%),
+                radial-gradient(circle at bottom right, rgba(23, 78, 166, 0.05), transparent 60%);
+    pointer-events: none; /* do not block clicks */
+    animation: modalFloat 12s ease-in-out infinite alternate;
+}
+/* Make content appear above floating effect */
+.gate-modal > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Fade-in + scale animation */
+@keyframes modalFadeIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+    
 @keyframes shake {
     0%, 100% {
         transform: translateX(0);

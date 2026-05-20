@@ -39,7 +39,7 @@ body {
 }
 
  body::before {
-    content: "Sample Questions Only";
+    content: "Sample Questions";
     position: fixed;
     top: 50%;
     left: 50%;

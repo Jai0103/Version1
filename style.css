@@ -109,7 +109,11 @@ input:focus-visible {
     box-shadow: var(--shadow);
     text-align: left;
 }
-   
+
+.gate-modal.shake {
+    animation: shake 0.22s ease;
+}
+
 @keyframes shake {
     0%, 100% {
         transform: translateX(0);
